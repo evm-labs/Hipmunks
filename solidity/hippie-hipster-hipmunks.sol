@@ -27,7 +27,9 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
     uint256 public constant MAX_CHIPMUNKS_PER_PURCHASE = 4;
     uint256 public constant MAX_CHIPMUNKS_WHITELIST_CAP = 2;
     uint256 public constant CHIPMUNK_PRICE = 0.066 ether;
-    uint256 public constant RESERVED_CHIPMUNK = 2222;
+    uint256 public constant PRESALE_CHIPMUNKS = 2000;
+    uint256 public constant DONATION_CHIPMUNKS = 22;
+    uint256 public constant RESERVED_CHIPMUNKS = 200;
 
     string public tokenBaseURI;
     string public unrevealedURI;
@@ -46,11 +48,6 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
 
     function setUnrevealedURI(string memory _unrevealedUri) external onlyOwner {
         unrevealedURI = _unrevealedUri;
-    }
-
-    function setWhitelistCap(uint256 _whitelist_cap) external onlyOwner {
-        require(_whitelist_cap > RESERVED_CHIPMUNK, "New reserved count must be higher than old");
-        RESERVED_CHIPMUNK = _whitelist_cap;
     }
 
     function tokenURI(uint256 _tokenId)
@@ -108,8 +105,8 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
         );
         require(presaleActive, "Presale is not active");
         require(
-            _quantity <= MAX_CHIPMUNKS_WHITELIST_CAP,
-            "You can only mint a maximum of 2 for presale"
+            tokenSupply.current().add(_quantity) <= PRESALE_CHIPMUNKS,
+            "This purchase would exceed max supply of Presale Chipmunks"
         );
         require(
             whitelistAddressMintCount[msg.sender].add(_quantity) <=
@@ -155,11 +152,11 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
     function mintReservedChipmunks() external onlyOwner {
         require(!reservesMinted, "Reserves have already been minted.");
         require(
-            tokenSupply.current().add(RESERVED_CHIPMUNK) <= MAX_CHIPMUNKS,
+            tokenSupply.current().add(RESERVED_CHIPMUNKS) <= MAX_CHIPMUNKS,
             "This mint would exceed max supply of Chipmunks"
         );
 
-        for (uint256 i = 0; i < RESERVED_CHIPMUNK; i++) {
+        for (uint256 i = 0; i < RESERVED_CHIPMUNKS; i++) {
             uint256 mintIndex = tokenSupply.current();
 
             if (mintIndex < MAX_CHIPMUNKS) {
