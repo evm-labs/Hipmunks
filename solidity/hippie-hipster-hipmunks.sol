@@ -1,23 +1,29 @@
 pragma solidity ^0.8.13;
+// SPDX-License-Identifier: None
 
-contract Hipmunks{
+/*
+             ,;:;;,
+           ;;;;;
+   .=',    ;:;;:,    ░░░░░    Ｈｉｐｐｉｅ   ░░░░░
+  /_', "=. ';:;:;    ░░░░░   Ｈｉｐｓｔｅｒ   ░░░░░ 
+  @=:__,  \,;:;:'    ░░░░░  Ｃｈｉｐｍｕｎｋｓ ░░░░░
+    _(\.=  ;:;;'
+   `"_(  _/="`
+   `"'``
+                    𝕓𝕪 @𝕖𝕧𝕞_𝕝𝕒𝕓𝕤 & @𝕕𝕚𝕞𝕚𝕣𝕖𝕒𝕕𝕤𝕥𝕙𝕚𝕟𝕘𝕤 (𝕋𝕨𝕚𝕥𝕥𝕖𝕣)
+*/
 
-//mint
-//preSaleMint
-//set token URI (for reveal)
-//set mintActive
-//set preSaleActive
-//withdraw function onlyOwner
-// 
+
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/Counters.sol"; //needed?
+import "@openzeppelin/contracts/utils/math/SafeMath.sol"; //needed?
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol"; //needed?
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./hipnation.sol";
 
-contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
+contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
     using ECDSA for bytes32;
@@ -36,6 +42,8 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
     bool public presaleActive = false;
     bool public mintActive = false;
     bool public reservesMinted = false;
+    bool public donationsMinted = false;
+
 
     mapping(address => uint256) private whitelistAddressMintCount;
     Counters.Counter public tokenSupply;
@@ -67,7 +75,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
             "ERC721Metadata: URI query for nonexistent token"
         );
 
-        return string(abi.encodePacked(tokenBaseURI, _tokenId.toString()));
+        return string(abi.encodePacked(tokenBaseURI, _tokenId.toString())); //.toString is Strings based
     }
 
     function setPresaleActive(bool _active) external onlyOwner {
@@ -88,7 +96,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
         view
         returns (bool)
     {
-        return hash.toEthSignedMessageHash().recover(signature) == owner();
+        return hash.toEthSignedMessageHash().recover(signature) == owner(); //.recover is ECDSA based
     }
 
     function presaleMint(uint256 _quantity, bytes calldata _whitelistSignature)
@@ -168,11 +176,24 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
         reservesMinted = true;
     }
 
+    function mintDonatedChipmunks() external onlyOwner {
+        require(!donationsMinted, "Donations have already been minted.");
+        require(
+            tokenSupply.current().add(DONATION_CHIPMUNKS) <= MAX_CHIPMUNKS,
+            "This mint would exceed max supply of Chipmunks"
+        );
 
+        for (uint256 i = 0; i < DONATION_CHIPMUNKS; i++) {
+            uint256 mintIndex = tokenSupply.current();
+
+            if (mintIndex < MAX_CHIPMUNKS) {
+                tokenSupply.increment();
+                _safeMint(Charities[CharitiesArray[i]], mintIndex);
+            }
+        }
+
+        donationsMinted = true;
     }
-
-}
-
 
 }
 
