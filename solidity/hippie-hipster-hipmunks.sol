@@ -195,18 +195,12 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
         require(success, "Failed to Deposit. Transfer transaction was not successful.");
     }
 
-    function depositToDaoAfterMint() external payable onlyOwner {
-        uint256 MintedChipmunks = tokenSupply.current() - RESERVED_CHIPMUNKS - DONATION_CHIPMUNKS;
-        require(
-            (MintedChipmunks).mul(CHIPMUNK_PRICE) >= (address(this).balance).mul(9).div(10),
-            "Funds have been depleted before deposit."
-        );
-        uint256 transferAmount = (MintedChipmunks).mul(CHIPMUNK_PRICE).mul(15).div(100);
+    function depositToDao() external payable onlyOwner {
+        uint256 transferAmount = address(this).balance.mul(15).div(100);
         (bool success, ) = HipDAOAddress.call{value:transferAmount}(""); 
         require(success, "Failed to Deposit. Transfer transaction was not successful.");
     }
 
-    // set royalties
 
 }
 
