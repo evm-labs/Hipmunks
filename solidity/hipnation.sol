@@ -13,12 +13,10 @@ pragma solidity ^0.8.13;
                     𝕓𝕪 @𝕖𝕧𝕞_𝕝𝕒𝕓𝕤 & @𝕕𝕚𝕞𝕚𝕣𝕖𝕒𝕕𝕤𝕥𝕙𝕚𝕟𝕘𝕤 (𝕋𝕨𝕚𝕥𝕥𝕖𝕣)
 */
 
-
 contract Hipnation{
 
     mapping(string => address payable) internal Charities;
     string [] CharitiesArray = ["UNICEF", "UKRAINE"];
-
 
     constructor(){
 

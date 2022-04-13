@@ -36,6 +36,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
     uint256 public constant PRESALE_CHIPMUNKS = 2000;
     uint256 public constant DONATION_CHIPMUNKS = 22;
     uint256 public constant RESERVED_CHIPMUNKS = 200;
+    address payable constant HipDAOAddress = payable(address(0));  // change this address
 
     string public tokenBaseURI;
     string public unrevealedURI;
@@ -48,7 +49,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
     mapping(address => uint256) private whitelistAddressMintCount;
     Counters.Counter public tokenSupply;
 
-    constructor() ERC721("Hippe Hipster Chipmunks", "HHC") {}
+    constructor() ERC721("Hippie Hipster Chipmunks", "HHC") {}
 
     function setTokenBaseURI(string memory _baseURI) external onlyOwner {
         tokenBaseURI = _baseURI;
@@ -75,7 +76,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
             "ERC721Metadata: URI query for nonexistent token"
         );
 
-        return string(abi.encodePacked(tokenBaseURI, _tokenId.toString())); //.toString is Strings based
+        return string(abi.encodePacked(tokenBaseURI, _tokenId.toString())); //.toString() is Strings based
     }
 
     function setPresaleActive(bool _active) external onlyOwner {
@@ -86,17 +87,12 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
         mintActive = _active;
     }
 
-    function withdraw() public onlyOwner {
-        uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
-    }
-
     function verifyOwnerSignature(bytes32 hash, bytes memory signature)
         private
         view
         returns (bool)
     {
-        return hash.toEthSignedMessageHash().recover(signature) == owner(); //.recover is ECDSA based
+        return hash.toEthSignedMessageHash().recover(signature) == owner(); //.recover() is ECDSA based
     }
 
     function presaleMint(uint256 _quantity, bytes calldata _whitelistSignature)
@@ -126,7 +122,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
         _safeMintChipmunks(_quantity);
     }
 
-    function publicMint(uint256 _quantity) external payable {
+    function publicMint(uint256 _quantity) external payable nonReentrant {
         require(mintActive, "Sale is not active.");
         require(
             _quantity <= MAX_CHIPMUNKS_PER_PURCHASE,
@@ -163,8 +159,8 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
             tokenSupply.current().add(RESERVED_CHIPMUNKS) <= MAX_CHIPMUNKS,
             "This mint would exceed max supply of Chipmunks"
         );
-
-        for (uint256 i = 0; i < RESERVED_CHIPMUNKS; i++) {
+        uint256 chimpmunksToMint = RESERVED_CHIPMUNKS.div(2);
+        for (uint256 i = 0; i < chimpmunksToMint; i++) {
             uint256 mintIndex = tokenSupply.current();
 
             if (mintIndex < MAX_CHIPMUNKS) {
@@ -172,7 +168,6 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
                 _safeMint(msg.sender, mintIndex);
             }
         }
-
         reservesMinted = true;
     }
 
@@ -194,6 +189,24 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
 
         donationsMinted = true;
     }
+
+    function withdraw() external payable onlyOwner {
+        (bool success, ) = payable(msg.sender).call{value:address(this).balance}(""); 
+        require(success, "Failed to Deposit. Transfer transaction was not successful.");
+    }
+
+    function depositToDaoAfterMint() external payable onlyOwner {
+        uint256 MintedChipmunks = tokenSupply.current() - RESERVED_CHIPMUNKS - DONATION_CHIPMUNKS;
+        require(
+            (MintedChipmunks).mul(CHIPMUNK_PRICE) >= (address(this).balance).mul(9).div(10),
+            "Funds have been depleted before deposit."
+        );
+        uint256 transferAmount = (MintedChipmunks).mul(CHIPMUNK_PRICE).mul(15).div(100);
+        (bool success, ) = HipDAOAddress.call{value:transferAmount}(""); 
+        require(success, "Failed to Deposit. Transfer transaction was not successful.");
+    }
+
+    // set royalties
 
 }
 
