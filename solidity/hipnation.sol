@@ -47,13 +47,12 @@ contract Hipnation is Ownable{
         _;
     }
 
-    function transferToCharity(uint256 _amountInEth) external onlyOwnerOrAdmin onlyEvery4thFriday{
-        uint256 amount = _amountInEth; // need to multiply
+    function transferToCharity(uint256 _amountInWei) external onlyOwnerOrAdmin onlyEvery4thFriday{
         require(
-            amount <= address(this).balance,
+            _amountInWei <= address(this).balance,
             "Requested amount exceeds available funds."
         );
-        (bool success, ) = Charities[CharityOfTheMonth].call{value:amount}(""); 
+        (bool success, ) = Charities[CharityOfTheMonth].call{value:_amountInWei}(""); 
         require(success, "Failed to Deposit. Transfer transaction was not successful.");
         updateDonationDate();
     }
