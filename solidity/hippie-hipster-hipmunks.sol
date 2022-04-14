@@ -17,13 +17,12 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol"; //needed?
-import "@openzeppelin/contracts/utils/math/SafeMath.sol"; //needed?
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol"; //needed?
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./hipnation.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
+contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
     using ECDSA for bytes32;
@@ -45,9 +44,9 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
     bool public reservesMinted = false;
     bool public donationsMinted = false;
 
-
     mapping(address => uint256) private whitelistAddressMintCount;
     Counters.Counter public tokenSupply;
+    Counters.Counter public reserveMintEntry;
 
     constructor() ERC721("Hippie Hipster Chipmunks", "HHC") {}
 
@@ -79,12 +78,12 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
         return string(abi.encodePacked(tokenBaseURI, _tokenId.toString())); //.toString() is Strings based
     }
 
-    function setPresaleActive(bool _active) external onlyOwner {
-        presaleActive = _active;
+    function changePresaleStatus() external onlyOwner {
+        presaleActive = !presaleActive;
     }
 
-    function setMintActive(bool _active) external onlyOwner {
-        mintActive = _active;
+    function changeMintStatus() external onlyOwner {
+        mintActive = !mintActive;
     }
 
     function verifyOwnerSignature(bytes32 hash, bytes memory signature)
@@ -139,7 +138,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
             "This purchase would exceed max supply of Chipmunks"
         );
         require(
-            msg.value >= CHIPMUNK_PRICE.mul(_quantity),
+            msg.value == CHIPMUNK_PRICE.mul(_quantity),
             "The ether value sent is not correct"
         );
 
@@ -159,6 +158,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
             tokenSupply.current().add(RESERVED_CHIPMUNKS) <= MAX_CHIPMUNKS,
             "This mint would exceed max supply of Chipmunks"
         );
+        reserveMintEntry.increment();
         uint256 chimpmunksToMint = RESERVED_CHIPMUNKS.div(2);
         for (uint256 i = 0; i < chimpmunksToMint; i++) {
             uint256 mintIndex = tokenSupply.current();
@@ -168,7 +168,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
                 _safeMint(msg.sender, mintIndex);
             }
         }
-        reservesMinted = true;
+        if (reserveMintEntry.current() == 2){reservesMinted = true;}
     }
 
     function mintDonatedChipmunks() external onlyOwner {
@@ -183,10 +183,9 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
 
             if (mintIndex < MAX_CHIPMUNKS) {
                 tokenSupply.increment();
-                _safeMint(Charities[CharitiesArray[i]], mintIndex);
+                _safeMint(HipDAOAddress, mintIndex);
             }
         }
-
         donationsMinted = true;
     }
 
@@ -203,4 +202,3 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard, Hipnation {
 
 
 }
-
