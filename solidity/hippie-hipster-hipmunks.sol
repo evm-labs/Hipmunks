@@ -35,7 +35,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
     uint256 public constant PRESALE_CHIPMUNKS = 2000;
     uint256 public constant DONATION_CHIPMUNKS = 22;
     uint256 public constant RESERVED_CHIPMUNKS = 200;
-    address payable constant HipDAOAddress = payable(address(0));  // change this address
+    address payable constant HipDAOAddress = payable(0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B);  // change this address
 
     string public tokenBaseURI;
     string public unrevealedURI;
@@ -43,9 +43,9 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
     bool public mintActive = false;
     bool public reservesMinted = false;
     bool public donationsMinted = false;
+    uint256 public balance;
 
     mapping(address => uint256) private whitelistAddressMintCount;
-    Counters.Counter public tokenSupply;
     Counters.Counter public reserveMintEntry;
 
     constructor() ERC721("Hippie Hipster Chipmunks", "HHC") {}
@@ -152,7 +152,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
         }
     }
 
-    function mintReservedChipmunks() external onlyOwner {
+    function mintReservedChipmunks() external payable onlyOwner {
         require(!reservesMinted, "Reserves have already been minted.");
         require(
             tokenSupply.current().add(RESERVED_CHIPMUNKS) <= MAX_CHIPMUNKS,
@@ -165,13 +165,13 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
 
             if (mintIndex < MAX_CHIPMUNKS) {
                 tokenSupply.increment();
-                _safeMint(msg.sender, mintIndex);
+                _safeMint(HipDAOAddress, mintIndex);
             }
         }
         if (reserveMintEntry.current() == 2){reservesMinted = true;}
     }
 
-    function mintDonatedChipmunks() external onlyOwner {
+    function mintDonatedChipmunks() external payable onlyOwner {
         require(!donationsMinted, "Donations have already been minted.");
         require(
             tokenSupply.current().add(DONATION_CHIPMUNKS) <= MAX_CHIPMUNKS,
@@ -187,6 +187,10 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
             }
         }
         donationsMinted = true;
+    }
+
+   function getBalance() external {
+        balance = address(this).balance;
     }
 
     function withdraw() external payable onlyOwner {
