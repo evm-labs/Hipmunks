@@ -49,6 +49,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
 
     mapping(address => uint256) private whitelistAddressMintCount;
     Counters.Counter public reserveMintEntry;
+    Counters.Counter public tokenSupply;
 
     constructor() ERC721("Hippie Hipster Chipmunks", "HHC") {}
 
