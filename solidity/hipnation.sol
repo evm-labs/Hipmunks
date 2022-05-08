@@ -24,12 +24,12 @@ contract Hipnation is Ownable{
     address payable internal CharityAddress;
     mapping (address => bool) internal AdminVoted;
     mapping (address => uint) internal CharityVote;
-    address payable[] internal adminsVoted;
+    address payable[3] internal adminsVoted;
     address public DAOadmin = owner();
     address public DAOadminValidator = owner();
+    uint32 private DonationDate = 1656680400; // July 1st 2021, 9AM EDT
+    uint32 private donationWindow = 3 days;
     uint256 public balance;
-    uint256 private DonationDate = 1656680400; // July 1st 2021, 9AM EDT
-    uint256 private donationWindow = 259200; // seconds in 3 days
 
     modifier onlyEvery4thFriday(){
         require(
@@ -60,6 +60,7 @@ contract Hipnation is Ownable{
         for (uint i=0; i<=adminsVoted.length; i++){
             AdminVoted[adminsVoted[i]]=false;
         }
+        delete adminsVoted;
     }
 
     function motionForNewCharity(address payable newCharity) public onlyOwnerOrAdmins onlyEvery4thFriday{
@@ -101,7 +102,7 @@ contract Hipnation is Ownable{
     }
 
     function updateDonationDate() internal {
-        DonationDate += 2419200; // 4 weeks
+        DonationDate += 4 weeks;
     }
 
     function setDonationDate(uint256 _unixTimestamp) external onlyOwner {

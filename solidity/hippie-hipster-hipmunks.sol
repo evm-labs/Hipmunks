@@ -27,16 +27,17 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
+    using SafeMath for uint8;
     using ECDSA for bytes32;
     using Strings for uint256;
 
-    uint256 public constant MAX_CHIPMUNKS = 8888;
-    uint256 public constant MAX_CHIPMUNKS_PER_PURCHASE = 4;
-    uint256 public constant MAX_CHIPMUNKS_WHITELIST_CAP = 2;
+    uint8 public constant MAX_CHIPMUNKS_PER_PURCHASE = 4;
+    uint8 public constant MAX_CHIPMUNKS_WHITELIST_CAP = 2;
+    uint8 public constant DONATION_CHIPMUNKS = 22;
+    uint8 public constant RESERVED_CHIPMUNKS = 200;
+    uint32 public constant PRESALE_CHIPMUNKS = 2000;
+    uint32 public constant MAX_CHIPMUNKS = 8888;
     uint256 public constant CHIPMUNK_PRICE = 0.066 ether;
-    uint256 public constant PRESALE_CHIPMUNKS = 2000;
-    uint256 public constant DONATION_CHIPMUNKS = 22;
-    uint256 public constant RESERVED_CHIPMUNKS = 200;
     address payable constant HipDAOAddress = payable(0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B);  // change this address
 
     string public tokenBaseURI;
@@ -81,6 +82,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
         return string(abi.encodePacked(tokenBaseURI, _tokenId.toString())); //.toString() is Strings based
     }
 
+
     function changePresaleStatus() external onlyOwner {
         presaleActive = !presaleActive;
     }
@@ -117,7 +119,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
         require(
             whitelistAddressMintCount[msg.sender].add(_quantity) <=
                 MAX_CHIPMUNKS_WHITELIST_CAP,
-            "This purchase would exceed the maximum Chipmunks you are allowed to mint in the presale"
+            "This purchase would exceed maximum Chipmunks allowed in presale"
         );
 
         whitelistAddressMintCount[msg.sender] += _quantity;
@@ -171,7 +173,7 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
                 _safeMint(HipDAOAddress, mintIndex);
             }
         }
-        if (reserveMintEntry.current() == 2){reservesMinted = true;}
+        if (reserveMintEntry.current() == 2){reservesMinted = true;} // Mint Reserves over 2 calls
     }
 
     function mintDonatedChipmunks() external payable onlyOwner {
@@ -180,7 +182,6 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
             tokenSupply.current().add(DONATION_CHIPMUNKS) <= MAX_CHIPMUNKS,
             "This mint would exceed max supply of Chipmunks"
         );
-
         for (uint256 i = 0; i < DONATION_CHIPMUNKS; i++) {
             uint256 mintIndex = tokenSupply.current();
 
@@ -196,14 +197,14 @@ contract HippieHipsterChipmunks is ERC721, Ownable, ReentrancyGuard {
         balance = address(this).balance;
     }
 
-    function withdraw() external payable onlyOwner {
-        (bool success, ) = payable(msg.sender).call{value:address(this).balance}(""); 
+    function withdraw(uint256 _amount) external payable onlyOwner {
+        require(_amount <= address(this).balance, "Cannot withdraw more than the balance.");
+        (bool success, ) = payable(msg.sender).call{value:_amount}(""); 
         require(success, "Failed to Deposit. Transfer transaction was not successful.");
     }
 
     function depositToDao() external payable onlyOwner {
-        uint256 transferAmount = address(this).balance.mul(15).div(100);
-        (bool success, ) = HipDAOAddress.call{value:transferAmount}(""); 
+        (bool success, ) = HipDAOAddress.call{value:address(this).balance.mul(15).div(100)}(""); 
         require(success, "Failed to Deposit. Transfer transaction was not successful.");
     }
 
